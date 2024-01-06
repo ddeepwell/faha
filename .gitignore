@@ -1,0 +1,17 @@
+*.egg-info
+*.pyc
+.DS_Store
+.coverage
+.coverage.*
+.venv*
+.vscode
+__pycache__
+build
+coverage.*
+dist
+env
+venv*
+
+src/faha/oauth/tokens.json
+src/faha/league/info.json
+src/faha/league/league_id_20[0-9][0-9].json

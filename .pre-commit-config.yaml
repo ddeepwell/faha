@@ -1,0 +1,62 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.0
+    hooks:
+      - id: isort
+        name: "sort python imports"
+        args: [--profile=black, --force-grid-wrap=3, --multi-line=3]
+
+  - repo: https://github.com/psf/black
+    rev: 23.12.0
+    hooks:
+      - id: black
+        name: "autoformat python files"
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        name: "check for misspelled words"
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        name: "lint python files - flake8"
+        additional_dependencies: [
+          "flake8-docstrings>=1.7",
+          "flake8-print>=5.0.0",
+        ]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        name: "check type hints"
+        files: src
+
+  # custom local hooks
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+
+      - id: pytest
+        name: "run unit tests"
+        entry: pytest
+        language: python
+        always_run: true
+        pass_filenames: false
+        verbose: true
