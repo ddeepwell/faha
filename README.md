@@ -20,5 +20,5 @@ https://github.com/bbenbenek/nfl-fantasy-football
 2. Add client keys.
     1) Using the Consumer Key and Consumer Secret, execute `initialize_tokens` to add these to the project. This will open a web browser with a short key. Copy and paste the key into the terminal when requested.
 3. Get league information and ID
-    1) Get the league info. Execute `get_league_info`
-    2) Get the league ID. This can be found in your league's unique Yahoo Fantasy URL: "https://hockey.fantasysports.yahoo.com/hockey/XXXXX". Execute `input_league_id` and follow the prompts with this ID number and the season's starting year.
+    1) Get the league ID. This can be found in your league's unique Yahoo Fantasy URL: "https://hockey.fantasysports.yahoo.com/hockey/XXXXX". Execute `input_league_id` and follow the prompts with this ID number and the season's starting year.
+    2) Get the league info. Execute `get_league_info`
