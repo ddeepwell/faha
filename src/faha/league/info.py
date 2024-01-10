@@ -48,6 +48,41 @@ class SeasonInfo:
         """Return the raw league settings."""
         return json_io.read(settings_file())
 
+    @property
+    def num_managers(self) -> int:
+        """Return number of managers."""
+        return self._raw_settings["settings"][2]["num_teams"]
+
+    def stat_categories(self, flatten: bool = True) -> dict:
+        """Return the stat categories."""
+        raw_category_info = self._raw_settings["settings"][0]["stat_categories"]
+        utilized_stats = [
+            item
+            for item in raw_category_info["stats"]
+            if "is_only_display_stat" not in item["stat"]
+            or item["stat"]["is_only_display_stat"] == "0"
+        ]
+        raw_goalie_stats = [
+            item["stat"]
+            for item in utilized_stats
+            if item["stat"]["group"] == "goaltending"
+        ]
+        raw_offense_stats = [
+            item["stat"]
+            for item in utilized_stats
+            if item["stat"]["group"] == "offense"
+        ]
+        goalie_stats = {stat["stat_id"]: stat["name"] for stat in raw_goalie_stats}
+        offense_stats = {stat["stat_id"]: stat["name"] for stat in raw_offense_stats}
+        stats = {"goaltending": goalie_stats, "offense": offense_stats}
+        if flatten:
+            return {
+                str(id): name
+                for category_vals in stats.values()
+                for id, name in category_vals.items()
+            }
+        return stats
+
 
 def extract_league_info(oauth: OAuth2) -> dict:
     """Extract the league info from Yahoo.
