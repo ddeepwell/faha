@@ -49,3 +49,33 @@ class Managers:
             for id, value in stats.items()
             if id in stat_categories
         }
+
+    def team_roster(self, manager_id: str) -> dict:
+        """Return the roster of a manager's team."""
+        team_key = f"{self.season_info.league_key}.t.{manager_id}"
+        url = (
+            "https://fantasysports.yahooapis.com/fantasy/v2"
+            f"/team/{team_key}/roster/players"
+        )
+        res = request(self.oauth, url)
+        players = res["fantasy_content"]["team"][1]["roster"]["0"]["players"]
+        players.pop("count")
+        return {_player_id(player): _player_name(player) for player in players.values()}
+
+
+def _player_id(player: dict) -> str:
+    """Return the player ID."""
+    info = player["player"][0]
+    for item in info:
+        if "player_id" in item:
+            return item["player_id"]
+    raise KeyError("Player ID was not found.")
+
+
+def _player_name(player: dict) -> str:
+    """Return the player name."""
+    info = player["player"][0]
+    for item in info:
+        if "name" in item:
+            return item["name"]["full"]
+    raise KeyError("Player name was not found.")
