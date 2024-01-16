@@ -1,4 +1,4 @@
-"""Extract league info."""
+"""League info."""
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,8 +10,8 @@ from faha.utils import json_io
 
 
 @dataclass
-class SeasonInfo:
-    """Information class for a season of a league.
+class League:
+    """League class of a season.
 
     Note: only use this class with the current season
     because the game key is fixed to that season
@@ -36,13 +36,6 @@ class SeasonInfo:
         """Return the league ID."""
         file = league_ids_file()
         return json_io.read(file)[str(self.season)]
-
-    @property
-    def url(self) -> str:
-        """Return the URL of the league."""
-        return (
-            f"https://fantasysports.yahooapis.com/fantasy/v2/league/{self.league_key}"
-        )
 
     @property
     def _raw_settings(self) -> dict:
@@ -147,12 +140,12 @@ def extract_league_info(oauth: OAuth2) -> dict:
     return request(oauth, url)["fantasy_content"]["game"][0]
 
 
-def extract_league_settings(oauth: OAuth2, season_info: SeasonInfo) -> dict:
-    """Extract the league settings from Yahoo.
-
-    Note: this returns the current season only!
-    """
-    url = f"{season_info.url}/settings"
+def extract_league_settings(oauth: OAuth2, league: League) -> dict:
+    """Extract the league settings from Yahoo."""
+    url = (
+        "https://fantasysports.yahooapis.com/fantasy/v2"
+        f"/league/{league.league_key}/settings"
+    )
     all_settings = request(oauth, url)["fantasy_content"]["league"]
     num_teams = all_settings[0]["num_teams"]
     settings = all_settings[1]
@@ -166,8 +159,8 @@ def extract_and_save_league_info() -> None:
     league_info = extract_league_info(oauth)
     json_io.write(info_file(), league_info)
     season = int(league_info["season"])
-    season_info = SeasonInfo(season, oauth)
-    league_settings = extract_league_settings(oauth, season_info)
+    league = League(season, oauth)
+    league_settings = extract_league_settings(oauth, league)
     json_io.write(settings_file(), league_settings)
 
 
