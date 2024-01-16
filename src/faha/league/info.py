@@ -18,6 +18,7 @@ class SeasonInfo:
     """
 
     season: int
+    oauth: OAuth2
 
     @property
     def league_key(self) -> str:
@@ -83,6 +84,59 @@ class SeasonInfo:
             }
         return stats
 
+    def team_stats(self, manager_id: str) -> dict:
+        """Return the category stats for a manager."""
+        team_key = f"{self.league_key}.t.{manager_id}"
+        url = (
+            "https://fantasysports.yahooapis.com/fantasy/v2"
+            f"/team/{team_key}/stats;type=season"
+        )
+        res = request(self.oauth, url)
+        raw_stats = res["fantasy_content"]["team"][1]["team_stats"]["stats"]
+        stats = {
+            raw_stats[ind]["stat"]["stat_id"]: raw_stats[ind]["stat"]["value"]
+            for ind in range(len(raw_stats))
+        }
+        stat_categories = self.stat_categories(flatten=True)
+        return {
+            stat_categories[id]: value
+            for id, value in stats.items()
+            if id in stat_categories
+        }
+
+    def team_roster(self, manager_id: str) -> dict:
+        """Return the roster of a manager's team."""
+        team_key = f"{self.league_key}.t.{manager_id}"
+        url = (
+            "https://fantasysports.yahooapis.com/fantasy/v2"
+            f"/team/{team_key}/roster/players"
+        )
+        res = request(self.oauth, url)
+        players = res["fantasy_content"]["team"][1]["roster"]["0"]["players"]
+        players.pop("count")
+        return {
+            search_player_item(player["player"][0], "player_id"): search_player_item(
+                player["player"][0], "name"
+            )
+            for player in players.values()
+        }
+
+
+def search_player_item(info: dict, selection: str) -> str | list[str]:
+    """General search for information about a player."""
+    for item in info:
+        if selection in item:
+            if selection == "name":
+                return item[selection]["full"]
+            if selection == "eligible_positions":
+                return [
+                    position["position"]
+                    for position in item[selection]
+                    if position["position"] != "Util"
+                ]
+            return item[selection]
+    raise KeyError(f"Player {selection} was not found.")
+
 
 def extract_league_info(oauth: OAuth2) -> dict:
     """Extract the league info from Yahoo.
@@ -112,7 +166,7 @@ def extract_and_save_league_info() -> None:
     league_info = extract_league_info(oauth)
     json_io.write(info_file(), league_info)
     season = int(league_info["season"])
-    season_info = SeasonInfo(season)
+    season_info = SeasonInfo(season, oauth)
     league_settings = extract_league_settings(oauth, season_info)
     json_io.write(settings_file(), league_settings)
 
