@@ -80,11 +80,8 @@ class League:
     def team_stats(self, manager_id: str) -> dict:
         """Return the category stats for a manager."""
         team_key = f"{self.league_key}.t.{manager_id}"
-        url = (
-            "https://fantasysports.yahooapis.com/fantasy/v2"
-            f"/team/{team_key}/stats;type=season"
-        )
-        res = request(self.oauth, url)
+        uri = f"team/{team_key}/stats;type=season"
+        res = request(self.oauth, uri)
         raw_stats = res["fantasy_content"]["team"][1]["team_stats"]["stats"]
         stats = {
             raw_stats[ind]["stat"]["stat_id"]: raw_stats[ind]["stat"]["value"]
@@ -100,11 +97,8 @@ class League:
     def team_roster(self, manager_id: str) -> dict:
         """Return the roster of a manager's team."""
         team_key = f"{self.league_key}.t.{manager_id}"
-        url = (
-            "https://fantasysports.yahooapis.com/fantasy/v2"
-            f"/team/{team_key}/roster/players"
-        )
-        res = request(self.oauth, url)
+        uri = f"team/{team_key}/roster/players"
+        res = request(self.oauth, uri)
         players = res["fantasy_content"]["team"][1]["roster"]["0"]["players"]
         players.pop("count")
         return {
@@ -136,17 +130,14 @@ def extract_league_info(oauth: OAuth2) -> dict:
 
     Note: this returns the current season only!
     """
-    url = "https://fantasysports.yahooapis.com/fantasy/v2/game/nhl"
-    return request(oauth, url)["fantasy_content"]["game"][0]
+    uri = "game/nhl"
+    return request(oauth, uri)["fantasy_content"]["game"][0]
 
 
 def extract_league_settings(oauth: OAuth2, league: League) -> dict:
     """Extract the league settings from Yahoo."""
-    url = (
-        "https://fantasysports.yahooapis.com/fantasy/v2"
-        f"/league/{league.league_key}/settings"
-    )
-    all_settings = request(oauth, url)["fantasy_content"]["league"]
+    uri = f"league/{league.league_key}/settings"
+    all_settings = request(oauth, uri)["fantasy_content"]["league"]
     num_teams = all_settings[0]["num_teams"]
     settings = all_settings[1]
     settings["settings"].append({"num_teams": num_teams})

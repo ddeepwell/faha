@@ -13,4 +13,4 @@ env
 venv*
 
 src/faha/oauth/tokens.json
-src/faha/league/data/*.json
+src/faha/data/*.json
