@@ -1,12 +1,10 @@
 """League info."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from yahoo_oauth import OAuth2  # type: ignore
-
 from faha.oauth.client import get_client
-from faha.request import request
 from faha.utils import json_io
+from faha.yahoo import Yahoo
 
 
 @dataclass
@@ -18,7 +16,9 @@ class League:
     """
 
     season: int
-    oauth: OAuth2
+    yahoo_agent: Yahoo
+    team_stats_cache: dict = field(default_factory=dict)
+    team_rosters_cache: dict = field(default_factory=dict)
 
     @property
     def league_key(self) -> str:
@@ -77,12 +77,22 @@ class League:
             }
         return stats
 
-    def team_stats(self, manager_id: str) -> dict:
+    def team_stats(self, manager_ids: list[str]) -> dict:
         """Return the category stats for a manager."""
-        team_key = f"{self.league_key}.t.{manager_id}"
-        uri = f"team/{team_key}/stats;type=season"
-        res = request(self.oauth, uri)
-        raw_stats = res["fantasy_content"]["team"][1]["team_stats"]["stats"]
+        team_keys = self._team_keys(manager_ids)
+        res = self.yahoo_agent.get_team_stats(team_keys)
+        raw_data = res["fantasy_content"]["teams"]
+        raw_data.pop("count")
+        team_stats = {
+            team_info["team"][0][2]["name"]: self._extract_single_team_stats(team_info)
+            for team_info in raw_data.values()
+        }
+        for team, stats in team_stats.items():
+            self.team_stats_cache[team] = stats
+        return team_stats
+
+    def _extract_single_team_stats(self, team_info: dict) -> dict:
+        raw_stats = team_info["team"][1]["team_stats"]["stats"]
         stats = {
             raw_stats[ind]["stat"]["stat_id"]: raw_stats[ind]["stat"]["value"]
             for ind in range(len(raw_stats))
@@ -94,19 +104,33 @@ class League:
             if id in stat_categories
         }
 
-    def team_roster(self, manager_id: str) -> dict:
+    def team_roster(self, manager_ids: list[str]) -> dict:
         """Return the roster of a manager's team."""
-        team_key = f"{self.league_key}.t.{manager_id}"
-        uri = f"team/{team_key}/roster/players"
-        res = request(self.oauth, uri)
-        players = res["fantasy_content"]["team"][1]["roster"]["0"]["players"]
-        players.pop("count")
+        team_keys = self._team_keys(manager_ids)
+        res = self.yahoo_agent.get_team_roster(team_keys)
+        raw_data = res["fantasy_content"]["teams"]
+        raw_data.pop("count")
+        team_rosters = {
+            team_info["team"][0][2]["name"]: self._extract_single_team_roster(team_info)
+            for team_info in raw_data.values()
+        }
+        for team, roster in team_rosters.items():
+            self.team_rosters_cache[team] = roster
+        return team_rosters
+
+    def _extract_single_team_roster(self, team_info: dict) -> dict:
+        raw_players = team_info["team"][1]["roster"]["0"]["players"]
+        raw_players.pop("count")
         return {
             search_player_item(player["player"][0], "player_id"): search_player_item(
                 player["player"][0], "name"
             )
-            for player in players.values()
+            for player in raw_players.values()
         }
+
+    def _team_keys(self, manager_ids: list[str]) -> list[str]:
+        """Return the list of team keys."""
+        return [f"{self.league_key}.t.{manager_id}" for manager_id in manager_ids]
 
 
 def search_player_item(info: dict, selection: str) -> str | list[str]:
@@ -125,21 +149,20 @@ def search_player_item(info: dict, selection: str) -> str | list[str]:
     raise KeyError(f"Player {selection} was not found.")
 
 
-def extract_league_info(oauth: OAuth2) -> dict:
+def extract_league_info(yahoo_agent: Yahoo) -> dict:
     """Extract the league info from Yahoo.
 
     Note: this returns the current season only!
     """
-    uri = "game/nhl"
-    return request(oauth, uri)["fantasy_content"]["game"][0]
+    return yahoo_agent.get_league_info()["fantasy_content"]["game"][0]
 
 
-def extract_league_settings(oauth: OAuth2, league: League) -> dict:
+def extract_league_settings(yahoo_agent: Yahoo, league: League) -> dict:
     """Extract the league settings from Yahoo."""
-    uri = f"league/{league.league_key}/settings"
-    all_settings = request(oauth, uri)["fantasy_content"]["league"]
-    num_teams = all_settings[0]["num_teams"]
-    settings = all_settings[1]
+    all_settings = yahoo_agent.get_league_settings(league.league_key)
+    sub_settings = all_settings["fantasy_content"]["league"]
+    num_teams = sub_settings[0]["num_teams"]
+    settings = sub_settings[1]
     settings["settings"].append({"num_teams": num_teams})
     return settings
 
@@ -147,11 +170,12 @@ def extract_league_settings(oauth: OAuth2, league: League) -> dict:
 def extract_and_save_league_info() -> None:
     """Extract the league info from Yahoo and save to disk."""
     oauth = get_client()
-    league_info = extract_league_info(oauth)
+    yahoo_agent = Yahoo(oauth)
+    league_info = extract_league_info(yahoo_agent)
     json_io.write(info_file(), league_info)
     season = int(league_info["season"])
-    league = League(season, oauth)
-    league_settings = extract_league_settings(oauth, league)
+    league = League(season, yahoo_agent)
+    league_settings = extract_league_settings(yahoo_agent, league)
     json_io.write(settings_file(), league_settings)
 
 
