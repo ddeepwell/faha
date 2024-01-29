@@ -1,8 +1,23 @@
 """League info."""
 from dataclasses import dataclass, field
+from datetime import timedelta
 from pathlib import Path
 
+from glom import (  # type: ignore
+    SKIP,
+    M,
+    Or,
+    T,
+    glom,
+)
+
 from faha.oauth.client import get_client
+from faha.players import (
+    GoaliePlayer,
+    GoalieSeasonStats,
+    OffensePlayer,
+    OffenseSeasonStats,
+)
 from faha.utils import json_io
 from faha.yahoo import Yahoo
 
@@ -131,6 +146,189 @@ class League:
     def _team_keys(self, manager_ids: list[str]) -> list[str]:
         """Return the list of team keys."""
         return [f"{self.league_key}.t.{manager_id}" for manager_id in manager_ids]
+
+    def _player_keys(self, player_ids: list[str]) -> list[str]:
+        """Return the list of team keys."""
+        return [f"{self.game_key}.p.{player_id}" for player_id in player_ids]
+
+    def players(self, player_ids: list[str]) -> dict:
+        """Return stats for players matching the player ids."""
+        player_keys = self._player_keys(player_ids)
+        res = self.yahoo_agent.get_player_stats(player_keys)
+        raw_data = res["fantasy_content"]["players"]
+        raw_data.pop("count")
+        player_info = {
+            player_info["player"][0][2]["name"]["full"]: self._extract_player_data(
+                player_info
+            )
+            for player_info in raw_data.values()
+        }
+        return player_info
+
+    def _extract_player_data(self, player_info: dict) -> OffensePlayer | GoaliePlayer:
+        """Extract the player from raw data."""
+        player_id = _get_player_id(player_info)
+        name = _get_player_name(player_info)
+        nhl_team = _get_nhl_team(player_info)
+        positions = _get_positions(player_info)
+        position_type = _get_position_type(player_info)
+        if position_type == "P":
+            return OffensePlayer(
+                player_id=player_id,
+                name=name,
+                nhl_team=nhl_team,
+                positions=positions,
+                position_type=position_type,
+                season_stats=self._get_offensive_stats(player_info),
+            )
+        if position_type == "G":
+            return GoaliePlayer(
+                player_id=player_id,
+                name=name,
+                nhl_team=nhl_team,
+                positions=positions,
+                position_type=position_type,
+                season_stats=self._get_goalie_stats(player_info),
+            )
+        raise ValueError(f"Unknown position type, {position_type}")
+
+    def _get_offensive_stats(self, player_info: dict) -> OffenseSeasonStats:
+        """Return an offensive player's stats."""
+        time_on_ice = _convert_str_to_timedelta(
+            self._extract_stat(player_info, "Time on Ice")
+        )
+        goals = int(self._extract_stat(player_info, "Goals"))
+        assists = int(self._extract_stat(player_info, "Assists"))
+        plus_minus = int(self._extract_stat(player_info, "Plus/Minus"))
+        powerplay_points = int(self._extract_stat(player_info, "Powerplay Points"))
+        shots_on_goal = int(self._extract_stat(player_info, "Shots on Goal"))
+        faceoffs_won = int(self._extract_stat(player_info, "Faceoffs Won"))
+        hits = int(self._extract_stat(player_info, "Hits"))
+        blocks = int(self._extract_stat(player_info, "Blocks"))
+        return OffenseSeasonStats(
+            time_on_ice=time_on_ice,
+            goals=goals,
+            assists=assists,
+            plus_minus=plus_minus,
+            powerplay_points=powerplay_points,
+            shots_on_goal=shots_on_goal,
+            faceoffs_won=faceoffs_won,
+            hits=hits,
+            blocks=blocks,
+        )
+
+    def _get_goalie_stats(self, player_info: dict) -> GoalieSeasonStats:
+        """Return an goalie player's stats."""
+        minutes = _convert_seconds_str_to_timedelta(
+            self._extract_stat(player_info, "Minutes")
+        )
+        wins = int(self._extract_stat(player_info, "Wins"))
+        saves = int(self._extract_stat(player_info, "Saves"))
+        save_percentage = float(self._extract_stat(player_info, "Save Percentage"))
+        shutouts = int(self._extract_stat(player_info, "Shutouts"))
+        return GoalieSeasonStats(
+            minutes=minutes,
+            wins=wins,
+            saves=saves,
+            save_percentage=save_percentage,
+            shutouts=shutouts,
+        )
+
+    def _extract_stat(self, player_info: dict, stat_name: str) -> str:
+        """Extract a stat."""
+        return glom(player_info, self._stat_spec(stat_name))[0]
+
+    def _stat_spec(self, stat_name: str) -> tuple:
+        """Return the glom stat spec."""
+        stat_id = self._stat_id(stat_name)
+        return (
+            "player",
+            T[1],
+            "player_stats.stats",
+            [T["stat"]],
+            [Or((M(T["stat_id"]) == stat_id, "value"), default=SKIP)],
+        )
+
+    def _stat_id(self, stat_name: str) -> str:
+        """Return the stat ID for a stat name."""
+        if stat_name in self.stat_categories().values():
+            return next(
+                (k for k, v in self.stat_categories().items() if v == stat_name)
+            )
+        if stat_name == "Time on Ice":
+            return "34"
+        if stat_name == "Minutes":
+            return "28"
+        raise ValueError(f"Unknown stat: {stat_name}")
+
+
+def _get_player_id(player_info: dict) -> str:
+    return glom(
+        player_info,
+        ("player", T[0], ([Or((M(T["player_id"]), "player_id"), default=SKIP)])),
+    )[0]
+
+
+def _get_player_name(player_info: dict) -> str:
+    return glom(
+        player_info,
+        ("player", T[0], ([Or((M(T["name"]), "name.full"), default=SKIP)])),
+    )[0]
+
+
+def _get_nhl_team(player_info: dict) -> str:
+    return glom(
+        player_info,
+        (
+            "player",
+            T[0],
+            ([Or((M(T["editorial_team_abbr"]), "editorial_team_abbr"), default=SKIP)]),
+        ),
+    )[0]
+
+
+def _get_positions(player_info: dict) -> list[str]:
+    return glom(
+        player_info,
+        (
+            "player",
+            T[0],
+            (
+                [
+                    Or(
+                        (
+                            M(T["eligible_positions"]),
+                            "eligible_positions",
+                            ["position"],
+                        ),
+                        default=SKIP,
+                    )
+                ]
+            ),
+        ),
+    )[0]
+
+
+def _get_position_type(player_info: dict) -> str:
+    return glom(
+        player_info,
+        (
+            "player",
+            T[0],
+            ([Or((M(T["position_type"]), "position_type"), default=SKIP)]),
+        ),
+    )[0]
+
+
+def _convert_str_to_timedelta(time: str) -> timedelta:
+    """Convert a string to time delta."""
+    minutes, seconds = time.split(":")
+    return timedelta(seconds=int(minutes) * 60 + int(seconds))
+
+
+def _convert_seconds_str_to_timedelta(seconds: str) -> timedelta:
+    """Convert a string of seconds to time delta."""
+    return timedelta(seconds=int(seconds))
 
 
 def search_player_item(info: dict, selection: str) -> str | list[str]:

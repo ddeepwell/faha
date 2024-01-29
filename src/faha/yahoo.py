@@ -31,6 +31,12 @@ class Yahoo:
         uri = f"teams;team_keys={teams}/roster/players"
         return self.request(uri)
 
+    def get_player_stats(self, player_ids: list[str]) -> dict:
+        """Get season stats for players from player ids."""
+        players = ",".join(player_ids)
+        uri = f"players;player_keys={players}/stats;type=season"
+        return self.request(uri)
+
     def get_league_info(self) -> dict:
         """Get league information."""
         uri = "game/nhl"
