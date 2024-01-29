@@ -2,49 +2,53 @@
 from datetime import timedelta
 from typing import TypedDict
 
-
-class GoalieSeasonStats(TypedDict):
-    """Season stats class for goalies."""
-
-    minutes: timedelta
-    wins: int
-    saves: int
-    save_percentage: float
-    shutouts: int
-
-
-class OffenseSeasonStats(TypedDict):
-    """Season stats class for goalies."""
-
-    time_on_ice: timedelta
-    goals: int
-    assists: int
-    plus_minus: int
-    powerplay_points: int
-    shots_on_goal: int
-    faceoffs_won: int
-    hits: int
-    blocks: int
+GoalieSeasonStats = TypedDict(
+    "GoalieSeasonStats",
+    {
+        "Minutes": timedelta,
+        "Wins": int,
+        "Saves": int,
+        "Save Percentage": float,
+        "Shutouts": int,
+    },
+)
 
 
-class Player(TypedDict):
-    """Player class."""
+OffenseSeasonStats = TypedDict(
+    "OffenseSeasonStats",
+    {
+        "Time on Ice": timedelta,
+        "Goals": int,
+        "Assists": int,
+        "Plus/Minus": int,
+        "Powerplay Points": int,
+        "Shots on Goal": int,
+        "Faceoffs Won": int,
+        "Hits": int,
+        "Blocks": int,
+    },
+)
 
-    player_id: str
-    name: str
-    nhl_team: str
-    positions: list[str]
-    position_type: str
-    # primary_position: str
+
+Player = TypedDict(
+    "Player",
+    {
+        "Player ID": str,
+        "Name": str,
+        "NHL Team": str,
+        "Positions": list[str],
+        "Position Type": str,
+    },
+)
 
 
-class OffensePlayer(Player):
+OffensiveStats = TypedDict("OffensiveStats", {"Season Stats": OffenseSeasonStats})
+GoalieStats = TypedDict("GoalieStats", {"Season Stats": GoalieSeasonStats})
+
+
+class OffensePlayer(Player, OffensiveStats):  # pylint: disable=E0239,E0241
     """Offensive player class."""
 
-    season_stats: OffenseSeasonStats
 
-
-class GoaliePlayer(Player):
+class GoaliePlayer(Player, GoalieStats):  # pylint: disable=E0239,E0241
     """Goalie player class."""
-
-    season_stats: GoalieSeasonStats

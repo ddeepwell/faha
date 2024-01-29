@@ -173,23 +173,25 @@ class League:
         positions = _get_positions(player_info)
         position_type = _get_position_type(player_info)
         if position_type == "P":
-            return OffensePlayer(
-                player_id=player_id,
-                name=name,
-                nhl_team=nhl_team,
-                positions=positions,
-                position_type=position_type,
-                season_stats=self._get_offensive_stats(player_info),
-            )
+            oplayer: OffensePlayer = {
+                "Player ID": player_id,
+                "Name": name,
+                "NHL Team": nhl_team,
+                "Positions": positions,
+                "Position Type": position_type,
+                "Season Stats": self._get_offensive_stats(player_info),
+            }
+            return oplayer
         if position_type == "G":
-            return GoaliePlayer(
-                player_id=player_id,
-                name=name,
-                nhl_team=nhl_team,
-                positions=positions,
-                position_type=position_type,
-                season_stats=self._get_goalie_stats(player_info),
-            )
+            gplayer: GoaliePlayer = {
+                "Player ID": player_id,
+                "Name": name,
+                "NHL Team": nhl_team,
+                "Positions": positions,
+                "Position Type": position_type,
+                "Season Stats": self._get_goalie_stats(player_info),
+            }
+            return gplayer
         raise ValueError(f"Unknown position type, {position_type}")
 
     def _get_offensive_stats(self, player_info: dict) -> OffenseSeasonStats:
@@ -205,17 +207,18 @@ class League:
         faceoffs_won = int(self._extract_stat(player_info, "Faceoffs Won"))
         hits = int(self._extract_stat(player_info, "Hits"))
         blocks = int(self._extract_stat(player_info, "Blocks"))
-        return OffenseSeasonStats(
-            time_on_ice=time_on_ice,
-            goals=goals,
-            assists=assists,
-            plus_minus=plus_minus,
-            powerplay_points=powerplay_points,
-            shots_on_goal=shots_on_goal,
-            faceoffs_won=faceoffs_won,
-            hits=hits,
-            blocks=blocks,
-        )
+        stats: OffenseSeasonStats = {
+            "Time on Ice": time_on_ice,
+            "Goals": goals,
+            "Assists": assists,
+            "Plus/Minus": plus_minus,
+            "Powerplay Points": powerplay_points,
+            "Shots on Goal": shots_on_goal,
+            "Faceoffs Won": faceoffs_won,
+            "Hits": hits,
+            "Blocks": blocks,
+        }
+        return stats
 
     def _get_goalie_stats(self, player_info: dict) -> GoalieSeasonStats:
         """Return an goalie player's stats."""
@@ -226,13 +229,14 @@ class League:
         saves = int(self._extract_stat(player_info, "Saves"))
         save_percentage = float(self._extract_stat(player_info, "Save Percentage"))
         shutouts = int(self._extract_stat(player_info, "Shutouts"))
-        return GoalieSeasonStats(
-            minutes=minutes,
-            wins=wins,
-            saves=saves,
-            save_percentage=save_percentage,
-            shutouts=shutouts,
-        )
+        stats: GoalieSeasonStats = {
+            "Minutes": minutes,
+            "Wins": wins,
+            "Saves": saves,
+            "Save Percentage": save_percentage,
+            "Shutouts": shutouts,
+        }
+        return stats
 
     def _extract_stat(self, player_info: dict, stat_name: str) -> str:
         """Extract a stat."""
