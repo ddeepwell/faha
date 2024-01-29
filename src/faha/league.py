@@ -196,9 +196,7 @@ class League:
 
     def _get_offensive_stats(self, player_info: dict) -> OffenseSeasonStats:
         """Return an offensive player's stats."""
-        time_on_ice = _convert_str_to_timedelta(
-            self._extract_stat(player_info, "Time on Ice")
-        )
+        games_played = int(self._extract_stat(player_info, "Games Played"))
         goals = int(self._extract_stat(player_info, "Goals"))
         assists = int(self._extract_stat(player_info, "Assists"))
         plus_minus = int(self._extract_stat(player_info, "Plus/Minus"))
@@ -208,7 +206,7 @@ class League:
         hits = int(self._extract_stat(player_info, "Hits"))
         blocks = int(self._extract_stat(player_info, "Blocks"))
         stats: OffenseSeasonStats = {
-            "Time on Ice": time_on_ice,
+            "Games Played": games_played,
             "Goals": goals,
             "Assists": assists,
             "Plus/Minus": plus_minus,
@@ -259,8 +257,8 @@ class League:
             return next(
                 (k for k, v in self.stat_categories().items() if v == stat_name)
             )
-        if stat_name == "Time on Ice":
-            return "34"
+        if stat_name == "Games Played":
+            return "29"
         if stat_name == "Minutes":
             return "28"
         raise ValueError(f"Unknown stat: {stat_name}")

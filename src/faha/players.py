@@ -17,7 +17,7 @@ GoalieSeasonStats = TypedDict(
 OffenseSeasonStats = TypedDict(
     "OffenseSeasonStats",
     {
-        "Time on Ice": timedelta,
+        "Games Played": int,
         "Goals": int,
         "Assists": int,
         "Plus/Minus": int,
