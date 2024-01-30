@@ -1,11 +1,10 @@
 """Player methods."""
-from datetime import timedelta
 from typing import TypedDict
 
 GoalieSeasonStats = TypedDict(
     "GoalieSeasonStats",
     {
-        "Minutes": timedelta,
+        "Games Started": int,
         "Wins": int,
         "Saves": int,
         "Save Percentage": float,

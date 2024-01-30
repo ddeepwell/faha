@@ -1,6 +1,5 @@
 """League info."""
 from dataclasses import dataclass, field
-from datetime import timedelta
 from pathlib import Path
 
 from glom import (  # type: ignore
@@ -220,15 +219,13 @@ class League:
 
     def _get_goalie_stats(self, player_info: dict) -> GoalieSeasonStats:
         """Return an goalie player's stats."""
-        minutes = _convert_seconds_str_to_timedelta(
-            self._extract_stat(player_info, "Minutes")
-        )
+        games_started = int(self._extract_stat(player_info, "Games Started"))
         wins = int(self._extract_stat(player_info, "Wins"))
         saves = int(self._extract_stat(player_info, "Saves"))
         save_percentage = float(self._extract_stat(player_info, "Save Percentage"))
         shutouts = int(self._extract_stat(player_info, "Shutouts"))
         stats: GoalieSeasonStats = {
-            "Minutes": minutes,
+            "Games Started": games_started,
             "Wins": wins,
             "Saves": saves,
             "Save Percentage": save_percentage,
@@ -259,8 +256,8 @@ class League:
             )
         if stat_name == "Games Played":
             return "29"
-        if stat_name == "Minutes":
-            return "28"
+        if stat_name == "Games Started":
+            return "18"
         raise ValueError(f"Unknown stat: {stat_name}")
 
 
@@ -320,17 +317,6 @@ def _get_position_type(player_info: dict) -> str:
             ([Or((M(T["position_type"]), "position_type"), default=SKIP)]),
         ),
     )[0]
-
-
-def _convert_str_to_timedelta(time: str) -> timedelta:
-    """Convert a string to time delta."""
-    minutes, seconds = time.split(":")
-    return timedelta(seconds=int(minutes) * 60 + int(seconds))
-
-
-def _convert_seconds_str_to_timedelta(seconds: str) -> timedelta:
-    """Convert a string of seconds to time delta."""
-    return timedelta(seconds=int(seconds))
 
 
 def search_player_item(info: dict, selection: str) -> str | list[str]:
