@@ -1,5 +1,25 @@
 """Weight of each stat category."""
+from typing import Callable, TypedDict
+
 from faha.league import League
+
+Weights = TypedDict(
+    "Weights",
+    {
+        "Goals": float,
+        "Assists": float,
+        "Plus/Minus": float,
+        "Powerplay Points": float,
+        "Shots on Goal": float,
+        "Faceoffs Won": float,
+        "Hits": float,
+        "Blocks": float,
+        "Wins": float,
+        "Saves": float,
+        "Save Percentage": Callable[[float], float],
+        "Shutouts": float,
+    },
+)
 
 
 def all_manager_team_stats(league: League) -> dict:
@@ -22,7 +42,7 @@ def _convert(value: str, category: str) -> float | int:
     return int(value)
 
 
-def stat_weights(all_stats: dict) -> dict:
+def stat_weights(all_stats: dict) -> Weights:
     """Return the stat weights."""
     stat_sums = {category: sum(values) for category, values in all_stats.items()}
     weights = {
@@ -30,6 +50,7 @@ def stat_weights(all_stats: dict) -> dict:
     }
     # explicitly set the weights for difficult stat categories
     weights["Plus/Minus"] = 1 / 3
-    weights["Save Percentage"] = 0.1
+    # use a function that maps [0.890, 0.940] save percentage range to to [0, 3]
+    weights["Save Percentage"] = lambda x: 60 * (x - 0.89)
     weights["Shutouts"] /= 3
-    return weights
+    return weights  # type: ignore
