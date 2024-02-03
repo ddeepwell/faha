@@ -118,9 +118,12 @@ class League:
             if id in stat_categories
         }
 
-    def team_roster(self, manager_ids: list[str]) -> dict:
+    def team_roster(self, manager_ids: list[str] | str) -> dict:
         """Return the roster of a manager's team."""
-        team_keys = self._team_keys(manager_ids)
+        if isinstance(manager_ids, str):
+            team_keys = self._team_keys([manager_ids])
+        else:
+            team_keys = self._team_keys(manager_ids)
         res = self.yahoo_agent.get_team_roster(team_keys)
         raw_data = res["fantasy_content"]["teams"]
         raw_data.pop("count")
