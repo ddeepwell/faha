@@ -19,6 +19,12 @@ class Yahoo:
             raise RuntimeError(response.content)
         return response.json()
 
+    def get_team_info(self, team_keys: list[str]) -> dict:
+        """Get team info."""
+        teams = ",".join(team_keys)
+        uri = f"teams;team_keys={teams}"
+        return self.request(uri)
+
     def get_team_stats(self, team_keys: list[str]) -> dict:
         """Get the season stats for a team or teams."""
         teams = ",".join(team_keys)

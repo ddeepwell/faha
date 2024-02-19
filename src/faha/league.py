@@ -70,6 +70,20 @@ class League:
         """Return the list of all manager IDs."""
         return [str(mngr) for mngr in range(1, self.num_managers + 1)]
 
+    @property
+    def team_names(self) -> dict[str, str]:
+        """Return the team names."""
+        team_keys = self._team_keys(self.all_manager_ids)
+        res = self.yahoo_agent.get_team_info(team_keys)
+        raw_data = res["fantasy_content"]["teams"]
+        raw_data.pop("count")
+        return {
+            _get_team_info(team_info, "name")[0]: _get_team_info(team_info, "team_id")[
+                0
+            ]
+            for team_info in raw_data.values()
+        }
+
     def stat_categories(self, flatten: bool = True) -> dict:
         """Return the stat categories."""
         raw_category_info = self._raw_settings["settings"][0]["stat_categories"]
@@ -363,6 +377,12 @@ def _get_position_type(player_info: dict) -> str:
             ([Or((M(T["position_type"]), "position_type"), default=SKIP)]),
         ),
     )[0]
+
+
+def _get_team_info(team_info: dict, category) -> str:
+    return glom(
+        team_info, ("team", T[0], ([Or((M(T[category]), category), default=SKIP)]))
+    )
 
 
 def search_player_item(info: dict, selection: str) -> str | list[str]:
