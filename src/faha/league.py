@@ -65,6 +65,11 @@ class League:
         """Return number of managers."""
         return self._raw_settings["settings"][2]["num_teams"]
 
+    @property
+    def all_manager_ids(self) -> list[str]:
+        """Return the list of all manager IDs."""
+        return [str(mngr) for mngr in range(1, self.num_managers + 1)]
+
     def stat_categories(self, flatten: bool = True) -> dict:
         """Return the stat categories."""
         raw_category_info = self._raw_settings["settings"][0]["stat_categories"]

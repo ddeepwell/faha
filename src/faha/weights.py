@@ -5,8 +5,7 @@ from faha.league import League
 
 def all_manager_team_stats(league: League) -> dict:
     """Extract the stats of all teams."""
-    manager_ids = [str(mngr) for mngr in range(1, league.num_managers + 1)]
-    raw_stats = league.team_stats(manager_ids)
+    raw_stats = league.team_stats(league.all_manager_ids)
     return {
         category: [
             _convert(team_stats[category], category)
