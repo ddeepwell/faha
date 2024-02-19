@@ -135,6 +135,13 @@ class League:
             self.team_rosters_cache[team] = roster
         return team_rosters
 
+    def team_player_stats(self, manager_id: str) -> dict:
+        """Find players on a team and return their stats and info."""
+        roster = self.team_roster(manager_id)
+        team_name = list(roster.keys())[0]
+        players = list(roster[team_name].keys())
+        return self.players(players)
+
     def _extract_single_team_roster(self, team_info: dict) -> dict:
         raw_players = team_info["team"][1]["roster"]["0"]["players"]
         raw_players.pop("count")
