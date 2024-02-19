@@ -1,25 +1,6 @@
 """Weight of each stat category."""
-from typing import Callable, TypedDict
-
+from faha._types import Weights
 from faha.league import League
-
-Weights = TypedDict(
-    "Weights",
-    {
-        "Goals": float,
-        "Assists": float,
-        "Plus/Minus": float,
-        "Powerplay Points": float,
-        "Shots on Goal": float,
-        "Faceoffs Won": float,
-        "Hits": float,
-        "Blocks": float,
-        "Wins": float,
-        "Saves": float,
-        "Save Percentage": Callable[[float], float],
-        "Shutouts": float,
-    },
-)
 
 
 def all_manager_team_stats(league: League) -> dict:

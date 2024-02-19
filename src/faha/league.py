@@ -1,6 +1,8 @@
 """League info."""
+
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 from glom import (  # type: ignore
     SKIP,
@@ -10,6 +12,7 @@ from glom import (  # type: ignore
     glom,
 )
 
+from faha._types import Weights
 from faha.oauth.client import get_client
 from faha.players import (
     GoaliePlayer,
@@ -18,6 +21,7 @@ from faha.players import (
     OffenseSeasonStats,
 )
 from faha.utils import json_io
+from faha.value import goalie_player_value, offense_player_value
 from faha.yahoo import Yahoo
 
 
@@ -141,6 +145,33 @@ class League:
         team_name = list(roster.keys())[0]
         players = list(roster[team_name].keys())
         return self.players(players)
+
+    def team_offense_player_values(
+        self, manager_id: str, weights: Weights
+    ) -> list[tuple[str, float]]:
+        """Return the skater player values for a manager."""
+        return self._team_player_values(manager_id, weights, "P")
+
+    def team_goalie_player_values(
+        self, manager_id: str, weights: Weights
+    ) -> list[tuple[str, float]]:
+        """Return the goalie player values for a manager."""
+        return self._team_player_values(manager_id, weights, "G")
+
+    def _team_player_values(
+        self, manager_id: str, weights: Weights, position: str
+    ) -> list[tuple[str, float]]:
+        stats = self.team_player_stats(manager_id)
+        if position == "P":
+            calculate_value: Callable = offense_player_value
+        else:
+            calculate_value = goalie_player_value
+        scores = {
+            name: calculate_value(info["Season Stats"], weights)
+            for name, info in stats.items()
+            if info["Position Type"] == position
+        }
+        return sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
     def _extract_single_team_roster(self, team_info: dict) -> dict:
         raw_players = team_info["team"][1]["roster"]["0"]["players"]

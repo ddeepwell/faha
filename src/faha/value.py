@@ -1,9 +1,9 @@
 """Value a player."""
+from faha._types import Weights
 from faha.players import GoalieSeasonStats, OffenseSeasonStats
-from faha.weights import Weights
 
 
-def offense_player_value(stats: OffenseSeasonStats, weights: dict[str, float]) -> float:
+def offense_player_value(stats: OffenseSeasonStats, weights: Weights) -> float:
     """Calculate offensive player value."""
     games_played = stats["Games Played"]
     normalized_stats = {
@@ -12,7 +12,8 @@ def offense_player_value(stats: OffenseSeasonStats, weights: dict[str, float]) -
         if name != "Games Played"
     }
     return sum(
-        value * weights[stat_name] for stat_name, value in normalized_stats.items()
+        value * weights[stat_name]  # type: ignore
+        for stat_name, value in normalized_stats.items()
     )
 
 
