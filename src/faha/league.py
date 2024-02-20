@@ -192,6 +192,25 @@ class League:
         }
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
+    def team_values(self, weights: Weights) -> list[tuple[str, float]]:
+        """Return the list of teams and their values.
+
+        This method can be greatly improved, likely by combining the many API calls
+        that currently exist within the for loop.
+        Might want to find a way to account for the variance in player slots between
+        offensive (11 slots) and goalie (2 slots) players
+        """
+        team_list = []
+        for manager, manager_id in self.team_names.items():
+            offense_values = self.team_offense_player_values(manager_id, weights)
+            goalie_values = self.team_goalie_player_values(manager_id, weights)
+            team_value = (
+                sum(value for _, value in offense_values) * 8 / 12
+                + sum(value for _, value in goalie_values) * 4 / 12
+            )  # goalies only account for 4/12th of the stats
+            team_list.append((manager, team_value))
+        return sorted(team_list, key=lambda x: x[1], reverse=True)
+
     def _extract_single_team_roster(self, team_info: dict) -> dict:
         raw_players = team_info["team"][1]["roster"]["0"]["players"]
         raw_players.pop("count")
