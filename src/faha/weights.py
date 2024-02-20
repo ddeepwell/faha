@@ -1,4 +1,5 @@
 """Weight of each stat category."""
+
 from faha._types import Weights
 from faha.league import League
 
@@ -24,7 +25,9 @@ def _convert(value: str, category: str) -> float | int:
 
 def stat_weights(all_stats: dict) -> Weights:
     """Return the stat weights."""
-    stat_sums = {category: sum(values) for category, values in all_stats.items()}
+    stat_sums = {
+        category: sum(sorted(values)[-2:]) / 2 for category, values in all_stats.items()
+    }
     weights = {
         category: stat_sums["Goals"] / value for category, value in stat_sums.items()
     }
