@@ -2,8 +2,9 @@
 
 A simple analysis tool to explore fantasy player statistics.
 
-Much appreciation to the following repo:
-https://github.com/bbenbenek/nfl-fantasy-football
+Much appreciation to the following repos:
+- https://github.com/bbenbenek/nfl-fantasy-football
+- https://github.com/spilchen/yahoo_fantasy_api
 
 
 
