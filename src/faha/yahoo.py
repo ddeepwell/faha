@@ -1,4 +1,5 @@
 """Make request to Yahoo."""
+
 from yahoo_oauth import OAuth2  # type: ignore
 
 YAHOO_ENDPOINT = "https://fantasysports.yahooapis.com/fantasy/v2"
@@ -41,6 +42,16 @@ class Yahoo:
         """Get season stats for players from player ids."""
         players = ",".join(player_ids)
         uri = f"players;player_keys={players}/stats;type=season"
+        return self.request(uri)
+
+    def get_player_category_stats(
+        self, league_key: str, player_index: int, status: str
+    ) -> dict:
+        """Get season stats for players from player ids."""
+        uri = (
+            f"league/{league_key}/players;start={player_index};"
+            f"count=25;status={status}/stats;type=season"
+        )
         return self.request(uri)
 
     def get_league_info(self) -> dict:

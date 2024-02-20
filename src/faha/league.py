@@ -37,6 +37,8 @@ class League:
     yahoo_agent: Yahoo
     team_stats_cache: dict = field(default_factory=dict)
     team_rosters_cache: dict = field(default_factory=dict)
+    taken_players_cache: dict = field(default_factory=dict)
+    available_players_cache: dict = field(default_factory=dict)
 
     @property
     def league_key(self) -> str:
@@ -274,15 +276,17 @@ class League:
 
     def _get_offensive_stats(self, player_info: dict) -> OffenseSeasonStats:
         """Return an offensive player's stats."""
-        games_played = int(self._extract_stat(player_info, "Games Played"))
-        goals = int(self._extract_stat(player_info, "Goals"))
-        assists = int(self._extract_stat(player_info, "Assists"))
-        plus_minus = int(self._extract_stat(player_info, "Plus/Minus"))
-        powerplay_points = int(self._extract_stat(player_info, "Powerplay Points"))
-        shots_on_goal = int(self._extract_stat(player_info, "Shots on Goal"))
-        faceoffs_won = int(self._extract_stat(player_info, "Faceoffs Won"))
-        hits = int(self._extract_stat(player_info, "Hits"))
-        blocks = int(self._extract_stat(player_info, "Blocks"))
+        games_played = convert(self._extract_stat(player_info, "Games Played"), int)
+        goals = convert(self._extract_stat(player_info, "Goals"), int)
+        assists = convert(self._extract_stat(player_info, "Assists"), int)
+        plus_minus = convert(self._extract_stat(player_info, "Plus/Minus"), int)
+        powerplay_points = convert(
+            self._extract_stat(player_info, "Powerplay Points"), int
+        )
+        shots_on_goal = convert(self._extract_stat(player_info, "Shots on Goal"), int)
+        faceoffs_won = convert(self._extract_stat(player_info, "Faceoffs Won"), int)
+        hits = convert(self._extract_stat(player_info, "Hits"), int)
+        blocks = convert(self._extract_stat(player_info, "Blocks"), int)
         stats: OffenseSeasonStats = {
             "Games Played": games_played,
             "Goals": goals,
@@ -298,11 +302,13 @@ class League:
 
     def _get_goalie_stats(self, player_info: dict) -> GoalieSeasonStats:
         """Return an goalie player's stats."""
-        games_started = int(self._extract_stat(player_info, "Games Started"))
-        wins = int(self._extract_stat(player_info, "Wins"))
-        saves = int(self._extract_stat(player_info, "Saves"))
-        save_percentage = float(self._extract_stat(player_info, "Save Percentage"))
-        shutouts = int(self._extract_stat(player_info, "Shutouts"))
+        games_started = convert(self._extract_stat(player_info, "Games Started"), int)
+        wins = convert(self._extract_stat(player_info, "Wins"), int)
+        saves = convert(self._extract_stat(player_info, "Saves"), int)
+        save_percentage = convert(
+            self._extract_stat(player_info, "Save Percentage"), float
+        )
+        shutouts = convert(self._extract_stat(player_info, "Shutouts"), int)
         stats: GoalieSeasonStats = {
             "Games Started": games_started,
             "Wins": wins,
@@ -338,6 +344,87 @@ class League:
         if stat_name == "Games Started":
             return "18"
         raise ValueError(f"Unknown stat: {stat_name}")
+
+    def taken_players(self) -> dict:
+        """Return the players taken by teams."""
+        if not self.taken_players_cache:
+            self.taken_players_cache = self._fetch_players("T")
+        return self.taken_players_cache
+
+    def available_players(self) -> dict:
+        """Return the available players."""
+        if not self.available_players_cache:
+            self.available_players_cache = self._fetch_players("A")
+        return self.available_players_cache
+
+    def _fetch_players(self, status: str) -> dict:
+        """Fetch players from Yahoo.
+
+        Args:
+            status (str): Indicates what type of players to get.  Available
+            options are: 'FA' for free agents, 'W' waivers only, 'T' all taken
+            players, 'K' keepers, 'A' all available players (FA + WA).
+        """
+        # The Yahoo! API we use doles out players 25 per page.  We need to make
+        # successive calls to gather all of the players.  We stop when we fetch
+        # less then 25.
+        player_keys = self._fetch_players_ids(status)
+        player_key_chunks = [
+            player_keys[ii : ii + 25]  # noqa: E203
+            for ii in range(0, len(player_keys), 25)
+        ]
+        players: dict = {}
+        for players_in_chunk in player_key_chunks:
+            potential_players = self.players(players_in_chunk)
+            players |= {
+                k: v
+                for k, v in potential_players.items()
+                if not (
+                    (
+                        "Games Started" in v["Season Stats"]
+                        and v["Season Stats"]["Games Started"] == 0
+                    )
+                    or (
+                        "Games Played" in v["Season Stats"]
+                        and v["Season Stats"]["Games Played"] == 0
+                    )
+                )
+            }
+        return players
+
+    def _fetch_players_ids(self, status: str) -> list[str]:
+        """Fetch player ids from Yahoo with a status.
+
+        Args:
+            status (str): Indicates what type of players to get.  Available
+            options are: 'FA' for free agents, 'W' waivers only, 'T' all taken
+            players, 'K' keepers, 'A' all available players (FA + WA).
+        """
+        # The Yahoo! API we use doles out players 25 per page.  We need to make
+        # successive calls to gather all of the players.  We stop when we fetch
+        # less then 25.
+        players_per_page = 25
+        player_ids = []
+        player_index = 0
+        while player_index % players_per_page == 0:
+            res = self.yahoo_agent.get_player_category_stats(
+                self.league_key, player_index, status
+            )
+            raw_data = res["fantasy_content"]["league"][1]["players"]
+            num_paginated_players = raw_data["count"]
+            if num_paginated_players == 0:
+                break
+            raw_data.pop("count")
+            player_index += num_paginated_players
+            player_ids += [
+                _get_player_id(player_info) for player_info in raw_data.values()
+            ]
+        return player_ids
+
+
+def convert(quantity: str, new_type: type) -> int:
+    """Convert a string to int."""
+    return new_type(quantity) if quantity != "-" else 0
 
 
 def _get_player_id(player_info: dict) -> str:
