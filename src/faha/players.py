@@ -1,4 +1,5 @@
 """Player methods."""
+
 from typing import TypedDict
 
 GoalieSeasonStats = TypedDict(
@@ -41,6 +42,12 @@ Player = TypedDict(
 )
 
 
+Value = TypedDict(
+    "Value",
+    {"Value": float},
+)
+
+
 OffensiveStats = TypedDict("OffensiveStats", {"Season Stats": OffenseSeasonStats})
 GoalieStats = TypedDict("GoalieStats", {"Season Stats": GoalieSeasonStats})
 
@@ -51,3 +58,11 @@ class OffensePlayer(Player, OffensiveStats):  # pylint: disable=E0239,E0241
 
 class GoaliePlayer(Player, GoalieStats):  # pylint: disable=E0239,E0241
     """Goalie player class."""
+
+
+class ValuedOffensePlayer(Player, OffensiveStats, Value):  # pylint: disable=E0239,E0241
+    """Offensive player class with player value."""
+
+
+class ValuedGoaliePlayer(Player, GoalieStats, Value):  # pylint: disable=E0239,E0241
+    """Goalie player class with player value."""

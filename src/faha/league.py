@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 from glom import (  # type: ignore
     SKIP,
@@ -21,7 +21,7 @@ from faha.players import (
     OffenseSeasonStats,
 )
 from faha.utils import json_io
-from faha.value import goalie_player_value, offense_player_value
+from faha.value import calculate_player_values, sort_players
 from faha.yahoo import Yahoo
 
 
@@ -182,17 +182,16 @@ class League:
     def _team_player_values(
         self, manager_id: str, weights: Weights, position: str
     ) -> list[tuple[str, float]]:
-        stats = self.team_player_stats(manager_id)
-        if position == "P":
-            calculate_value: Callable = offense_player_value
-        else:
-            calculate_value = goalie_player_value
-        scores = {
-            name: calculate_value(info["Season Stats"], weights)
-            for name, info in stats.items()
-            if info["Position Type"] == position
-        }
-        return sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        player_stats = self.team_player_stats(manager_id)
+        players_to_remove = [
+            player_name
+            for player_name, player_info in player_stats.items()
+            if player_info["Position Type"] == position
+        ]
+        for player_name in players_to_remove:
+            player_stats.pop(player_name)
+        valued_stats = calculate_player_values(player_stats, weights)
+        return sort_players(valued_stats, condensed=True)  # type: ignore
 
     def team_values(self, weights: Weights) -> list[tuple[str, float]]:
         """Return the list of teams and their values.

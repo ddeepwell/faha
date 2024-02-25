@@ -1,6 +1,17 @@
 """Value a player."""
+
+from copy import deepcopy
+from typing import Optional
+
 from faha._types import Weights
-from faha.players import GoalieSeasonStats, OffenseSeasonStats
+from faha.players import (
+    GoaliePlayer,
+    GoalieSeasonStats,
+    OffensePlayer,
+    OffenseSeasonStats,
+    ValuedGoaliePlayer,
+    ValuedOffensePlayer,
+)
 
 
 def offense_player_value(stats: OffenseSeasonStats, weights: Weights) -> float:
@@ -30,3 +41,36 @@ def goalie_player_value(stats: GoalieSeasonStats, weights: Weights) -> float:
         value * weights[stat_name]  # type: ignore
         for stat_name, value in normalized_stats.items()
     )
+
+
+def calculate_player_values(
+    players: dict[str, OffensePlayer | GoaliePlayer], weights: Weights
+) -> dict[str, ValuedOffensePlayer | ValuedGoaliePlayer]:
+    """Add the player's values."""
+    players_copy = deepcopy(players)
+    for player in players_copy.values():
+        position = player["Position Type"]
+        if position == "P":
+            player["Value"] = (  # type: ignore
+                offense_player_value(player["Season Stats"], weights)  # type: ignore
+            )
+        else:
+            player["Value"] = (  # type: ignore
+                goalie_player_value(player["Season Stats"], weights)  # type: ignore
+            )
+    return players_copy  # type: ignore
+
+
+def sort_players(
+    players: dict[str, ValuedOffensePlayer | ValuedGoaliePlayer],
+    condensed: Optional[bool] = False,
+) -> (
+    list[tuple[str, ValuedOffensePlayer | ValuedGoaliePlayer]] | list[tuple[str, float]]
+):
+    """Sort the players by their value."""
+    sorted_players = sorted(
+        players.items(), key=lambda x: x[1]["Value"], reverse=True  # type: ignore
+    )
+    if not condensed:
+        return sorted_players
+    return [(name, info["Value"]) for name, info in sorted_players]
