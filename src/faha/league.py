@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 from glom import (  # type: ignore
     SKIP,
@@ -345,19 +345,19 @@ class League:
             return "18"
         raise ValueError(f"Unknown stat: {stat_name}")
 
-    def taken_players(self) -> dict:
+    def taken_players(self, position: Optional[str] = None) -> dict:
         """Return the players taken by teams."""
         if not self.taken_players_cache:
-            self.taken_players_cache = self._fetch_players("T")
+            self.taken_players_cache = self._fetch_players("T", position)
         return self.taken_players_cache
 
-    def available_players(self) -> dict:
+    def available_players(self, position: Optional[str] = None) -> dict:
         """Return the available players."""
         if not self.available_players_cache:
-            self.available_players_cache = self._fetch_players("A")
+            self.available_players_cache = self._fetch_players("A", position)
         return self.available_players_cache
 
-    def _fetch_players(self, status: str) -> dict:
+    def _fetch_players(self, status: str, position: Optional[str] = None) -> dict:
         """Fetch players from Yahoo.
 
         Args:
@@ -368,7 +368,7 @@ class League:
         # The Yahoo! API we use doles out players 25 per page.  We need to make
         # successive calls to gather all of the players.  We stop when we fetch
         # less then 25.
-        player_keys = self._fetch_players_ids(status)
+        player_keys = self._fetch_players_ids(status, position)
         player_key_chunks = [
             player_keys[ii : ii + 25]  # noqa: E203
             for ii in range(0, len(player_keys), 25)
@@ -392,7 +392,11 @@ class League:
             }
         return players
 
-    def _fetch_players_ids(self, status: str) -> list[str]:
+    def _fetch_players_ids(
+        self,
+        status: str,
+        position: Optional[str] = None,
+    ) -> list[str]:
         """Fetch player ids from Yahoo with a status.
 
         Args:
@@ -408,7 +412,7 @@ class League:
         player_index = 0
         while player_index % players_per_page == 0:
             res = self.yahoo_agent.get_player_category_stats(
-                self.league_key, player_index, status
+                self.league_key, player_index, status, position
             )
             raw_data = res["fantasy_content"]["league"][1]["players"]
             num_paginated_players = raw_data["count"]
