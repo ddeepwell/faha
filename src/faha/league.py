@@ -186,7 +186,7 @@ class League:
         players_to_remove = [
             player_name
             for player_name, player_info in player_stats.items()
-            if player_info["Position Type"] == position
+            if player_info["Position Type"] != position
         ]
         for player_name in players_to_remove:
             player_stats.pop(player_name)
