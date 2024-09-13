@@ -2,6 +2,8 @@
 
 from faha._types import Weights
 from faha.league import League
+from faha.oauth.client import get_client
+from faha.yahoo import Yahoo
 
 
 def all_manager_team_stats(league: League) -> dict:
@@ -37,3 +39,12 @@ def stat_weights(all_stats: dict) -> Weights:
     weights["Save Percentage"] = lambda x: 60 * (x - 0.89)
     weights["Shutouts"] /= 3
     return weights  # type: ignore
+
+
+def stat_weights_for_season(season: int) -> Weights:
+    """Return the weights for a given season."""
+    oauth = get_client()
+    yahoo_agent = Yahoo(oauth)
+    lg = League(season, yahoo_agent)
+    all_stats = all_manager_team_stats(lg)
+    return stat_weights(all_stats)
