@@ -19,6 +19,7 @@ classifiers = [
 ]
 
 dependencies = [
+  "glom>=23.4.0",
   "yahoo-oauth>=2.0",
 ]
 optional-dependencies.dev = [
