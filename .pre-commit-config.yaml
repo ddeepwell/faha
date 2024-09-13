@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks.git
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
       - id: check-docstring-first
@@ -9,36 +9,47 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.0
+    rev: 5.13.2
     hooks:
       - id: isort
         name: "sort python imports"
         args: [--profile=black, --force-grid-wrap=3, --multi-line=3]
 
   - repo: https://github.com/psf/black
-    rev: 23.12.0
+    rev: 24.8.0
     hooks:
       - id: black
         name: "autoformat python files"
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         name: "check for misspelled words"
 
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [json, yaml, markdown]
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "2.2.3"
+    hooks:
+      - id: pyproject-fmt
+        name: autoformat pyproject.toml
+        args: [--keep-full-version]
+
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
+    rev: 7.1.1
     hooks:
       - id: flake8
         name: "lint python files - flake8"
-        additional_dependencies: [
-          "flake8-docstrings>=1.7",
-          "flake8-print>=5.0.0",
-        ]
+        additional_dependencies:
+          ["flake8-docstrings>=1.7", "flake8-print>=5.0.0"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.11.2
     hooks:
       - id: mypy
         name: "check type hints"

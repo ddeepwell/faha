@@ -1,4 +1,5 @@
 """OAuth tests."""
+
 from pathlib import Path
 
 from faha.oauth import client

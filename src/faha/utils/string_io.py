@@ -1,4 +1,5 @@
 """Read and write string content."""
+
 from pathlib import Path
 
 

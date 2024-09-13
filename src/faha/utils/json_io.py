@@ -1,4 +1,5 @@
 """Read and write with JSON."""
+
 import json
 from pathlib import Path
 

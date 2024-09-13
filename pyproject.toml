@@ -1,44 +1,43 @@
-
 [build-system]
-requires = ["setuptools>=69.0"]
 build-backend = "setuptools.build_meta"
+
+requires = [ "setuptools>=69.0" ]
 
 [project]
 name = "faha"
 version = "0.0.1"
-authors = [{ name = "David Deepwell", email = "dsdeepwell@gmail.com" }]
 description = "Fantasy Hockey Analysis."
 readme = "README.md"
+authors = [ { name = "David Deepwell", email = "dsdeepwell@gmail.com" } ]
 requires-python = ">=3.11"
-dependencies = [
-    "yahoo_oauth>=2.0",
-]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+  "Development Status :: 2 - Pre-Alpha",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-
-[project.optional-dependencies]
-dev = [
-    "flake8>=7.0",
-    "flake8-docstrings>=1.7",
-    "mypy>=1.8",
-    "pre-commit>=3.6",
-    "pylint>=3.0",
-    "pytest>=7.4",
+dependencies = [
+  "yahoo-oauth>=2.0",
 ]
+optional-dependencies.dev = [
+  "flake8>=7.0",
+  "flake8-docstrings>=1.7",
+  "mypy>=1.8",
+  "pre-commit>=3.6",
+  "pylint>=3.0",
+  "pytest>=7.4",
+]
+scripts.get_league_info = "faha.league:extract_and_save_league_info"
+scripts.initialize_tokens = "faha.oauth.client:initialize_keys"
+scripts.input_league_id = "faha.league:input_league_id"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = [ "src" ]
 
 [tool.setuptools.package-data]
-"faha" = ["py.typed"]
+"faha" = [ "py.typed" ]
 
-[project.scripts]
-initialize_tokens = "faha.oauth.client:initialize_keys"
-get_league_info = "faha.league:extract_and_save_league_info"
-input_league_id = "faha.league:input_league_id"
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]

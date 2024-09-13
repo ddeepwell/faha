@@ -1,4 +1,5 @@
 """Get OAuth Tokens."""
+
 from pathlib import Path
 
 from yahoo_oauth import OAuth2  # type: ignore
