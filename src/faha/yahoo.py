@@ -4,6 +4,8 @@ from typing import Optional
 
 from yahoo_oauth import OAuth2  # type: ignore
 
+from faha._types import Status
+
 YAHOO_ENDPOINT = "https://fantasysports.yahooapis.com/fantasy/v2"
 
 
@@ -50,7 +52,7 @@ class Yahoo:
         self,
         league_key: str,
         start_index: int,
-        status: str,
+        status: Status,
         position: Optional[str] = None,
     ) -> dict:
         """Get season stats for players from player ids."""
@@ -58,9 +60,15 @@ class Yahoo:
             position_string = ""
         else:
             position_string = f";position={position}"
+        if status == "ALL":
+            status_string = ""
+        else:
+            status_string = f";status={status}"
+        # if not position_string and not status_string:
+
         uri = (
             f"league/{league_key}/players;start={start_index};"
-            f"count=25;status={status}{position_string}/stats;type=season"
+            f"count=25{status_string}{position_string}/stats;type=season"
         )
         return self.request(uri)
 

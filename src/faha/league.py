@@ -12,7 +12,7 @@ from glom import (  # type: ignore
     glom,
 )
 
-from faha._types import Weights
+from faha._types import Status, Weights
 from faha.oauth.client import get_client
 from faha.players import (
     GoaliePlayer,
@@ -356,13 +356,21 @@ class League:
             self.available_players_cache = self._fetch_players("A", position)
         return self.available_players_cache
 
-    def _fetch_players(self, status: str, position: Optional[str] = None) -> dict:
+    def all_players(self, position: Optional[str] = None) -> dict:
+        """Return the all players."""
+        return self._fetch_players("ALL", position)
+
+    def _fetch_players(self, status: Status, position: Optional[str] = None) -> dict:
         """Fetch players from Yahoo.
 
         Args:
-            status (str): Indicates what type of players to get.  Available
-            options are: 'FA' for free agents, 'W' waivers only, 'T' all taken
-            players, 'K' keepers, 'A' all available players (FA + WA).
+            status (Status): Indicates what type of players to get. The options are:
+                - 'FA' free agents
+                - 'W' waivers
+                - 'T' taken players
+                - 'K' keepers
+                - 'A' available players (FA + WA)
+                - 'ALL' all players
         """
         # The Yahoo! API we use doles out players 25 per page.  We need to make
         # successive calls to gather all of the players.  We stop when we fetch
@@ -393,15 +401,19 @@ class League:
 
     def _fetch_players_ids(
         self,
-        status: str,
+        status: Status,
         position: Optional[str] = None,
     ) -> list[str]:
         """Fetch player ids from Yahoo with a status.
 
         Args:
-            status (str): Indicates what type of players to get.  Available
-            options are: 'FA' for free agents, 'W' waivers only, 'T' all taken
-            players, 'K' keepers, 'A' all available players (FA + WA).
+            status (Status): Indicates what type of players to get. The options are:
+                - 'FA' free agents
+                - 'W' waivers
+                - 'T' taken players
+                - 'K' keepers
+                - 'A' available players (FA + WA)
+                - 'ALL' all players
         """
         # The Yahoo! API we use doles out players 25 per page.  We need to make
         # successive calls to gather all of the players.  We stop when we fetch

@@ -1,6 +1,10 @@
 """Types."""
 
-from typing import Callable, TypedDict
+from typing import (
+    Callable,
+    Literal,
+    TypedDict,
+)
 
 Weights = TypedDict(
     "Weights",
@@ -19,3 +23,13 @@ Weights = TypedDict(
         "Shutouts": float,
     },
 )
+
+
+Status = Literal[
+    "FA",  # Free agents
+    "W",  # Waivers
+    "T",  # Taken
+    "K",  # Keepers
+    "A",  # Available players (FA + W)
+    "ALL",  # All players
+]
