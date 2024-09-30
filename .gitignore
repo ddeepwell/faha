@@ -11,6 +11,7 @@ coverage.*
 dist
 env
 venv*
+*.pkl
 
 src/faha/oauth/tokens.json
 src/faha/data/*.json
