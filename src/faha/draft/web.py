@@ -84,7 +84,6 @@ def is_position(position: str, dataframe: pd.DataFrame) -> list[bool]:
             "LW" in positions or "RW" in positions
             for positions in dataframe["Positions"]
         ]
-    # return [position in positions for positions in dataframe["Positions"]]
     return dataframe["Positions"].tolist()
 
 
@@ -286,19 +285,11 @@ def print_table(cols, data, title: str) -> None:
     """Print a position table."""
     cols.write(title)
     with cols:
-        for i, row in data.head(20).iterrows():
-            with st.container(border=False):
-                icols = st.columns([2.5, 1])
-                icols[0].text(
-                    f"{row["Name"]}\n"
-                    f"{', '.join(row['Positions']):<8} {row['Value']:2.2f}"
-                )
-                icols[1].button(
-                    "Delete",
-                    key=f"delete_{i}_{cols.id}",
-                    on_click=delete_player_in_all_tables,
-                    args=(row,),
-                )
+        for _, row in data.head(20).iterrows():
+            st.text(
+                f"{row["Name"]}\n"
+                f"{', '.join(row['Positions']):<8} {row['Value']:2.2f}"
+            )
 
 
 def text_inputs_section() -> None:
