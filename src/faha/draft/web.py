@@ -170,6 +170,9 @@ def initialize_state(data: Data) -> None:
     if "player_to_delete" not in st.session_state:
         st.session_state.player_to_delete = ""
 
+    if "player_to_value" not in st.session_state:
+        st.session_state.player_to_value = ""
+
     if "keepers_are_deleted" not in st.session_state:
         st.session_state.keepers_are_deleted = False
 
@@ -193,6 +196,22 @@ def _delete_player_in_table(position: Positions, name: str) -> None:
     st.session_state[position] = st.session_state[position][
         st.session_state[position]["Name"] != name
     ].reset_index(drop=True)
+
+
+def value_player_by_entry(name: str) -> None:
+    """Print the value of a player."""
+    name = name.strip()
+    if name not in _all_names():
+        st.toast(f"No player found with the name: {name}", icon=":material/cancel:")
+        return
+    for position in Positions:
+        names = st.session_state[position]["Name"]
+        player = st.session_state[position][names == name].iloc[0]
+        st.dataframe(player)
+        if _player_plays_position(position.value, player["Positions"]):
+            player_value = player["Value"]
+            st.toast(f"{player['Name']}: {player_value:2.2f}", icon=":material/check:")
+            return
 
 
 def delete_player_by_entry(name: str) -> None:
@@ -240,10 +259,16 @@ def undo_delete() -> None:
         st.toast(f"Undid deletion of {last_deleted['Name']}", icon=":material/check:")
 
 
-def update_text_inputs() -> None:
-    """Update the text input state variables."""
-    st.session_state.player_to_delete = st.session_state.name_input
-    st.session_state.name_input = ""
+def update_value_inputs() -> None:
+    """Update the value text input state variables."""
+    st.session_state.player_to_value = st.session_state.value_input
+    st.session_state.value_input = ""
+
+
+def update_delete_inputs() -> None:
+    """Update the delete text input state variables."""
+    st.session_state.player_to_delete = st.session_state.delete_input
+    st.session_state.delete_input = ""
 
 
 def print_position_tables() -> None:
@@ -276,21 +301,32 @@ def print_table(cols, data, title: str) -> None:
                 )
 
 
-def key_entry_section() -> None:
-    """Create the main application."""
-    _, delete_name_column, undo_delete_button_column, _ = st.columns([1, 2, 1, 1])
-    create_text_input(delete_name_column)
+def text_inputs_section() -> None:
+    """Create the text input section."""
+    value_column, delete_name_column, undo_delete_button_column = st.columns([2, 2, 1])
+    create_value_text_input(value_column)
+    create_delete_text_input(delete_name_column)
     check_pressed_enter()
     create_undo_button(undo_delete_button_column)
 
 
-def create_text_input(delete_name_column) -> None:
-    """Fill text input column."""
+def create_value_text_input(value_column) -> None:
+    """Fill player value text input column."""
+    with value_column:
+        st.text_input(
+            "Enter a name to print their value:",
+            key="value_input",
+            on_change=update_value_inputs,
+        )
+
+
+def create_delete_text_input(delete_name_column) -> None:
+    """Fill delete player text input column."""
     with delete_name_column:
         st.text_input(
             "Enter a name to delete:",
-            key="name_input",
-            on_change=update_text_inputs,
+            key="delete_input",
+            on_change=update_delete_inputs,
         )
 
 
@@ -298,6 +334,8 @@ def check_pressed_enter() -> None:
     """Check if enter was pressed during text input."""
     if st.session_state.player_to_delete:
         delete_player_by_entry(st.session_state.player_to_delete)
+    if st.session_state.player_to_value:
+        value_player_by_entry(st.session_state.player_to_value)
 
 
 def create_undo_button(undo_delete_button_column) -> None:
@@ -335,7 +373,7 @@ def main() -> None:
     configure_header()
     initialize_state(data)
     delete_keepers(year)
-    key_entry_section()
+    text_inputs_section()
     print_position_tables()
 
 
