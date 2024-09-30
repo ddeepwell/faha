@@ -87,76 +87,6 @@ def is_position(position: str, dataframe: pd.DataFrame) -> list[bool]:
     return dataframe["Positions"].tolist()
 
 
-def get_test_data() -> Data:
-    """Create test data."""
-    centers = pd.DataFrame(
-        {
-            "Name": ["Alice", "Bob", "Charlie", "David", "Erin"],
-            "Value": [25, 30, 35, 40, 45],
-            "NHL Team": [
-                "New York",
-                "San Francisco",
-                "Los Angeles",
-                "Chicago",
-                "Boston",
-            ],
-            "Positions": [["C", "LW"], "C", "C", "C", "C"],
-            "Position Type": ["P", "P", "P", "P", "P"],
-        }
-    ).sort_values(by="Value", ascending=False)
-    wingers = pd.DataFrame(
-        {
-            "Name": ["Alice", "Frank", "George", "Henry", "Ingrid"],
-            "Value": [25, 30, 35, 40, 45],
-            "NHL Team": [
-                "New York",
-                "San Francisco",
-                "Los Angeles",
-                "Chicago",
-                "Boston",
-            ],
-            "Positions": [["C", "LW"], ["RW"], ["LW"], ["LW"], ["LW", "RW"]],
-            "Position Type": ["P", "P", "P", "P", "P"],
-        }
-    ).sort_values(by="Value", ascending=False)
-    defensemen = pd.DataFrame(
-        {
-            "Name": ["Joey", "Kirsten", "Liam", "Mary", "Norm"],
-            "Value": [25, 30, 35, 40, 45],
-            "NHL Team": [
-                "New York",
-                "San Francisco",
-                "Los Angeles",
-                "Chicago",
-                "Boston",
-            ],
-            "Positions": ["D", "D", "D", "D", "D"],
-            "Position Type": ["P", "P", "P", "P", "P"],
-        }
-    ).sort_values(by="Value", ascending=False)
-    goalies = pd.DataFrame(
-        {
-            "Name": ["Frank", "Garry", "Harry", "Isabelle", "Justine"],
-            "Value": [25, 30, 35, 40, 45],
-            "NHL Team": [
-                "New York",
-                "San Francisco",
-                "Los Angeles",
-                "Chicago",
-                "Boston",
-            ],
-            "Positions": ["G", "G", "G", "G", "G"],
-            "Position Type": ["G", "G", "G", "G", "G"],
-        }
-    ).sort_values(by="Value", ascending=False)
-    return {
-        Positions.CENTER: centers,
-        Positions.WINGER: wingers,
-        Positions.DEFENSEMAN: defensemen,
-        Positions.GOALIE: goalies,
-    }
-
-
 def initialize_state(data: Data) -> None:
     """Initialize the streamlit state."""
     if Positions.CENTER not in st.session_state:
@@ -363,7 +293,6 @@ def main() -> None:
     else:
         data = get_data_from_yahoo(year)
         save_data(data, data_file)
-    # data = get_test_data()
     configure_page()
     configure_header()
     initialize_state(data)
