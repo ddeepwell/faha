@@ -194,22 +194,22 @@ def _player_plays_position(position: str, positions: list[str]) -> bool:
 def _delete_player_in_table(position: Positions, name: str) -> None:
     st.session_state[position] = st.session_state[position][
         st.session_state[position]["Name"] != name
-    ].reset_index(drop=True)
+    ]
 
 
 def value_player_by_entry(name: str) -> None:
     """Print the value of a player."""
     name = name.strip()
     if name not in _all_names():
-        st.toast(f"No player found with the name: {name}", icon=":material/cancel:")
+        _not_found_message(name)
         return
     for position in Positions:
         names = st.session_state[position]["Name"]
-        player = st.session_state[position][names == name].iloc[0]
-        st.dataframe(player)
-        if _player_plays_position(position.value, player["Positions"]):
+        if name in names.tolist():
+            player = st.session_state[position].loc[name]
             player_value = player["Value"]
             st.toast(f"{player['Name']}: {player_value:2.2f}", icon=":material/check:")
+            st.session_state.player_to_value = ""
             return
 
 
@@ -217,7 +217,7 @@ def delete_player_by_entry(name: str) -> None:
     """Delete a player by entering a name."""
     name = name.strip()
     if name not in _all_names():
-        st.toast(f"No player found with the name: {name}", icon=":material/cancel:")
+        _not_found_message(name)
         return
     name_in_table = False
     iter_positions = iter(Positions)
@@ -226,9 +226,13 @@ def delete_player_by_entry(name: str) -> None:
         names = st.session_state[position]["Name"]
         name_in_table = name in names.tolist()
         if name_in_table:
-            row = st.session_state[position][names == name]
-            delete_player_in_all_tables(row.iloc[0])
+            player = st.session_state[position].loc[name]
+            delete_player_in_all_tables(player)
     st.session_state.player_to_delete = ""
+
+
+def _not_found_message(name: str) -> None:
+    st.toast(f"No player found with the name: {name}", icon=":material/cancel:")
 
 
 def _all_names() -> set:
