@@ -48,7 +48,7 @@ class League:
     @property
     def game_key(self) -> str:
         """Return the league game key."""
-        league_info = json_io.read(info_file())
+        league_info = json_io.read(info_file(self.season))
         return league_info["game_key"]
 
     @property
@@ -60,7 +60,7 @@ class League:
     @property
     def _raw_settings(self) -> dict:
         """Return the raw league settings."""
-        return json_io.read(settings_file())
+        return json_io.read(settings_file(self.season))
 
     @property
     def num_managers(self) -> int:
@@ -545,11 +545,11 @@ def extract_and_save_league_info() -> None:
     oauth = get_client()
     yahoo_agent = Yahoo(oauth)
     league_info = extract_league_info(yahoo_agent)
-    json_io.write(info_file(), league_info)
     season = int(league_info["season"])
+    json_io.write(info_file(season), league_info)
     league = League(season, yahoo_agent)
     league_settings = extract_league_settings(yahoo_agent, league)
-    json_io.write(settings_file(), league_settings)
+    json_io.write(settings_file(season), league_settings)
 
 
 def input_league_id() -> None:
@@ -565,9 +565,9 @@ def input_league_id() -> None:
     json_io.write(file, content)
 
 
-def info_file() -> Path:
+def info_file(season: int) -> Path:
     """Return the path of the league info file."""
-    return info_dir() / "info.json"
+    return info_dir() / f"info_{season}.json"
 
 
 def league_ids_file() -> Path:
@@ -575,9 +575,9 @@ def league_ids_file() -> Path:
     return info_dir() / "league_ids.json"
 
 
-def settings_file() -> Path:
+def settings_file(season: int) -> Path:
     """Return the path of the league settings file."""
-    return info_dir() / "settings.json"
+    return info_dir() / f"settings_{season}.json"
 
 
 def info_dir() -> Path:
