@@ -1,5 +1,10 @@
 """Weight of each stat category."""
 
+import typing
+from pathlib import Path
+
+import dill
+
 from faha._types import Weights
 from faha.league import League
 from faha.oauth.client import get_client
@@ -25,8 +30,8 @@ def _convert(value: str, category: str) -> float | int:
     return int(value)
 
 
-def stat_weights(all_stats: dict) -> Weights:
-    """Return the stat weights."""
+def calculate_stat_weights(all_stats: dict) -> Weights:
+    """Calculate the stat weights."""
     stat_sums = {
         category: sum(sorted(values)[-2:]) / 2 for category, values in all_stats.items()
     }
@@ -41,10 +46,33 @@ def stat_weights(all_stats: dict) -> Weights:
     return weights  # type: ignore
 
 
-def stat_weights_for_season(season: int) -> Weights:
-    """Return the weights for a given season."""
+def stat_weights_from_yahoo(season: int) -> Weights:
+    """Return the weights for a given season accessed from yahoo."""
     oauth = get_client()
     yahoo_agent = Yahoo(oauth)
     lg = League(season, yahoo_agent)
     all_stats = all_manager_team_stats(lg)
-    return stat_weights(all_stats)
+    return calculate_stat_weights(all_stats)
+
+
+def weights_file(season: int) -> Path:
+    """Return the weights file."""
+    return Path(f"src/faha/data/weights_{season}.pkl")
+
+
+def write_data(data: typing.Any, file_name: Path) -> None:
+    """Write dictionary to disk."""
+    with open(file_name, "wb") as file_handle:
+        dill.dump(data, file_handle)
+
+
+def write_weights(weights: Weights, season: int) -> None:
+    """Write weights to disk."""
+    write_data(weights, weights_file(season))
+
+
+def stat_weights_from_disk(season: int) -> Weights:
+    """Return the weights for a given season, accessed from a saved file on disk."""
+    file_name = weights_file(season)
+    with open(file_name, "rb") as file_handle:
+        return dill.load(file_handle)

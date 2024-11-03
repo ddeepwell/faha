@@ -19,6 +19,7 @@ classifiers = [
 ]
 
 dependencies = [
+  "dill>=0.3.9",
   "glom>=23.4.0",
   "yahoo-oauth>=2.0",
 ]
@@ -43,3 +44,7 @@ where = [ "src" ]
 
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
+
+[[tool.mypy.overrides]]
+module = [ "dill.*" ]
+ignore_missing_imports = true

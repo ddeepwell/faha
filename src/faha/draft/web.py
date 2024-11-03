@@ -15,7 +15,7 @@ import streamlit as st
 from faha.league import League
 from faha.oauth.client import get_client
 from faha.value import calculate_player_values
-from faha.weights import stat_weights_for_season
+from faha.weights import stat_weights_from_yahoo
 from faha.yahoo import Yahoo
 
 
@@ -66,7 +66,7 @@ def get_data_from_yahoo(year: int) -> Data:
     yahoo_agent = Yahoo(oauth)
     lg = League(year, yahoo_agent)
     taken = lg.taken_players()
-    weights = stat_weights_for_season(year)
+    weights = stat_weights_from_yahoo(year)
     taken_val = calculate_player_values(taken, weights)
     data_in_frame = pd.DataFrame(taken_val).transpose()
     return {
