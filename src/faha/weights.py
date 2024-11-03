@@ -10,6 +10,21 @@ from faha.league import League
 from faha.oauth.client import get_client
 from faha.yahoo import Yahoo
 
+STAT_NAMES = {
+    "Wins": "W",
+    "Save Percentage": "SV%",
+    "Saves": "SV",
+    "Shutouts": "SHO",
+    "Goals": "G",
+    "Assists": "A",
+    "Plus/Minus": "+/-",
+    "Powerplay Points": "PPP",
+    "Shots on Goal": "SOG",
+    "Faceoffs Won": "FW",
+    "Hits": "HIT",
+    "Blocks": "BLK",
+}
+
 
 def all_manager_team_stats(league: League) -> dict:
     """Extract the stats of all teams."""

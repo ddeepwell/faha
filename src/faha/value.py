@@ -14,7 +14,9 @@ from faha.players import (
 )
 
 
-def offense_player_value(stats: OffenseSeasonStats, weights: Weights) -> float:
+def offense_player_stat_values(
+    stats: OffenseSeasonStats, weights: Weights, sort: bool = False
+) -> dict[str, float]:
     """Calculate offensive player value."""
     games_played = stats["Games Played"]
     normalized_stats = {
@@ -22,13 +24,23 @@ def offense_player_value(stats: OffenseSeasonStats, weights: Weights) -> float:
         for name, value in stats.items()
         if name != "Games Played"
     }
-    return sum(
-        value * weights[stat_name]  # type: ignore
+    values = [
+        (stat_name, value * weights[stat_name])  # type: ignore
         for stat_name, value in normalized_stats.items()
-    )
+    ]
+    if sort:
+        return dict(sorted(values, key=lambda x: x[1], reverse=True))
+    return dict(values)
 
 
-def goalie_player_value(stats: GoalieSeasonStats, weights: Weights) -> float:
+def offense_player_value(stats: OffenseSeasonStats, weights: Weights) -> float:
+    """Calculate offensive player value."""
+    return sum(offense_player_stat_values(stats, weights).values())
+
+
+def goalie_player_stat_values(
+    stats: GoalieSeasonStats, weights: Weights, sort: bool = False
+) -> dict[str, float]:
     """Calculate goalie player value."""
     games_started = stats["Games Started"]
     normalized_stats = {
@@ -37,10 +49,18 @@ def goalie_player_value(stats: GoalieSeasonStats, weights: Weights) -> float:
         if name not in ["Games Started", "Save Percentage"]
     }
     save_percentage_value = weights["Save Percentage"](stats["Save Percentage"])
-    return save_percentage_value + sum(  # type: ignore
-        value * weights[stat_name]  # type: ignore
+    values = [("Save Percentage", save_percentage_value)] + [
+        (stat_name, value * weights[stat_name])  # type: ignore
         for stat_name, value in normalized_stats.items()
-    )
+    ]
+    if sort:
+        return dict(sorted(values, key=lambda x: x[1], reverse=True))
+    return dict(values)
+
+
+def goalie_player_value(stats: GoalieSeasonStats, weights: Weights) -> float:
+    """Calculate goalie player value."""
+    return sum(goalie_player_stat_values(stats, weights).values())
 
 
 def calculate_player_values(

@@ -14,8 +14,12 @@ import streamlit as st
 
 from faha.league import League
 from faha.oauth.client import get_client
-from faha.value import calculate_player_values
-from faha.weights import stat_weights_from_yahoo
+from faha.value import (
+    calculate_player_values,
+    goalie_player_stat_values,
+    offense_player_stat_values,
+)
+from faha.weights import STAT_NAMES, stat_weights_from_disk
 from faha.yahoo import Yahoo
 
 
@@ -66,7 +70,7 @@ def get_data_from_yahoo(year: int) -> Data:
     yahoo_agent = Yahoo(oauth)
     lg = League(year, yahoo_agent)
     taken = lg.taken_players()
-    weights = stat_weights_from_yahoo(year)
+    weights = stat_weights_from_disk(year)
     taken_val = calculate_player_values(taken, weights)
     data_in_frame = pd.DataFrame(taken_val).transpose()
     return {
@@ -220,9 +224,29 @@ def print_table(cols, data, title: str) -> None:
     cols.write(title)
     with cols:
         for _, row in data.head(20).iterrows():
+            games_played = (
+                row["Season Stats"]["Games Started"]
+                if row["Positions"] == ["G"]
+                else row["Season Stats"]["Games Played"]
+            )
+            weights = stat_weights_from_disk(2023)
+            if row["Positions"] == ["G"]:
+                stats = goalie_player_stat_values(
+                    row["Season Stats"], weights, sort=True
+                )
+            else:
+                stats = offense_player_stat_values(
+                    row["Season Stats"], weights, sort=True
+                )
+            stat_string = " ".join(
+                [f"{STAT_NAMES[name]}: {value:1.1f}" for name, value in stats.items()][
+                    :4
+                ]
+            )
             st.text(
-                f"{row["Name"]}\n"
-                f"{', '.join(row['Positions']):<8} {row['Value']:2.2f}"
+                f"{row['Value']:2.2f}  {row["Name"]} [{row["NHL Team"]}]\n"
+                f"{', '.join(row['Positions']):<8} GP: {games_played}\n"
+                f"{stat_string}"
             )
 
 
