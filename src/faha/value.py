@@ -19,6 +19,8 @@ def offense_player_stat_values(
 ) -> dict[str, float]:
     """Calculate offensive player value."""
     games_played = stats["Games Played"]
+    if games_played == 0:
+        return dict({name: 0 for name in stats.keys() if name != "Games Played"})
     normalized_stats = {
         name: value / games_played  # type: ignore
         for name, value in stats.items()
