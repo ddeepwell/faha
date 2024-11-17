@@ -21,6 +21,9 @@ classifiers = [
 dependencies = [
   "dill>=0.3.9",
   "glom>=23.4.0",
+  "pandas>=2.0.0",
+  "pandas-stubs==2.2.2.240909",
+  "streamlit>=1.37.0",
   "yahoo-oauth>=2.0",
 ]
 optional-dependencies.dev = [
@@ -31,7 +34,6 @@ optional-dependencies.dev = [
   "pylint>=3.0",
   "pytest>=7.4",
 ]
-optional-dependencies.webui = [ "pandas>=2.0.0", "pandas-stubs==2.2.2.240909", "streamlit>=1.37.0" ]
 scripts.get_league_info = "faha.league:extract_and_save_league_info"
 scripts.initialize_tokens = "faha.oauth.client:initialize_keys"
 scripts.input_league_id = "faha.league:input_league_id"

@@ -8,6 +8,11 @@ import argparse
 import pickle
 from enum import StrEnum
 from pathlib import Path
+from typing import (
+    Any,
+    Literal,
+    get_args,
+)
 
 import pandas as pd
 import streamlit as st
@@ -32,6 +37,10 @@ class Positions(StrEnum):
     GOALIE = "G"
 
 
+Mode = Literal[
+    "draft",
+    "season",
+]
 Data = dict[Positions, pd.DataFrame]
 
 
@@ -64,12 +73,15 @@ def save_data(data: Data, data_file: Path) -> None:
         pickle.dump(data, file)
 
 
-def get_data_from_yahoo(year: int) -> Data:
+def get_data_from_yahoo(year: int, mode: Mode) -> Data:
     """Create data from a year."""
     oauth = get_client()
     yahoo_agent = Yahoo(oauth)
     lg = League(year, yahoo_agent)
-    taken = lg.taken_players()
+    if mode == "draft":
+        taken = lg.taken_players()
+    else:
+        taken = lg.available_players()
     weights = stat_weights_from_disk(year)
     taken_val = calculate_player_values(taken, weights)
     data_in_frame = pd.DataFrame(taken_val).transpose()
@@ -88,7 +100,7 @@ def is_position(position: str, dataframe: pd.DataFrame) -> list[bool]:
             "LW" in positions or "RW" in positions
             for positions in dataframe["Positions"]
         ]
-    return dataframe["Positions"].tolist()
+    return [position in positions for positions in dataframe["Positions"]]
 
 
 def initialize_state(data: Data) -> None:
@@ -305,22 +317,34 @@ def delete_keepers(year: int):
         st.session_state.keepers_are_deleted = True
 
 
+def _mode_type_validator(value: Any) -> bool:
+    if value in get_args(Mode):
+        return True
+    return False
+
+
 def main() -> None:
     """Create the web UI."""
     parser = argparse.ArgumentParser(description="Create draft helper web UI")
     parser.add_argument("year", type=int)
+    parser.add_argument("-m", "--mode", type=_mode_type_validator, default="season")
     args = parser.parse_args()
     year = args.year
-    data_file = Path(f"src/faha/data/{year}.pkl")
-    if data_file.exists():
-        data = get_saved_data(data_file)
+    mode = args.mode
+    if mode == "draft":
+        data_file = Path(f"src/faha/data/{year}.pkl")
+        if data_file.exists():
+            data = get_saved_data(data_file)
+        else:
+            data = get_data_from_yahoo(year, mode)
+            save_data(data, data_file)
     else:
-        data = get_data_from_yahoo(year)
-        save_data(data, data_file)
+        data = get_data_from_yahoo(year, mode)
     configure_page()
     configure_header()
     initialize_state(data)
-    delete_keepers(year)
+    if mode == "draft":
+        delete_keepers(year)
     text_inputs_section()
     print_position_tables()
 
